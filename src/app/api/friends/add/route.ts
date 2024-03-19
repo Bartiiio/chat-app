@@ -8,8 +8,6 @@ import { getServerSession } from "next-auth";
 import { z } from "zod";
 
 export async function POST(req: Request) {
-   const session = await getServerSession(authOptions);
-   console.log(session);
    try {
       const body = await req.json();
 
@@ -23,6 +21,8 @@ export async function POST(req: Request) {
       if (!idToAdd) {
          return new Response("This person does not exist.", { status: 400 });
       }
+
+      const session = await getServerSession(authOptions);
 
       if (!session) {
          return new Response("Unauthorized", { status: 401 });
@@ -58,10 +58,13 @@ export async function POST(req: Request) {
 
       // valid request, send friend request
 
-      pusherServer.trigger(
+      await pusherServer.trigger(
          toPusherKey(`user:${idToAdd}:incoming_friend_requests`),
          "incoming_friend_requests",
-         { senderId: session.user.id, senderEmail: session.user.email }
+         {
+            senderId: session.user.id,
+            senderEmail: session.user.email,
+         }
       );
 
       await db.sadd(
